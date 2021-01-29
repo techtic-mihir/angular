@@ -1,0 +1,469 @@
+<!-- <div class="cybrex-cybersecurity-program"> -->
+<div class="cybrex-inner-content">
+    <div>
+        <div style="display: block;"></div>
+    </div>
+    <div class="cybrex-inner-content-cols">
+        <div class="cybrex-inner-col-left">
+            <div class="my-program-selector" [ngClass]="isShowLevel ? 'framework-level' : ''"
+                *authPermission="'WRITE_ACCESS_ENABLED'">
+                <div class="box" *ngIf="frameworkLength > 0">
+                    <div ngbDropdown #frameworkDropdown="ngbDropdown"
+                        [ngClass]="selectedFramework && frameworkLength == 1 ?  'framework-selector2':'framework-selector'">
+                        <button [innerHTML]="selectedFramework ? selectedFramework.name : 'My Programs'"
+                            ngbDropdownToggle></button>
+                        <div ngbDropdownMenu class="list" *ngIf="!selectedFramework || frameworkLength > 1">
+                            <button *ngFor="let framework of frameworks"
+                                (click)="onFrameworkChange(framework);frameworkDropdown.close();"
+                                class="option">{{framework.name}}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="my-program-selector level-selector" *authPermission="'WRITE_ACCESS_ENABLED'">
+                <div class="box" *ngIf="isShowLevel">
+                    <program-level-dropdown [selectedFramework]="selectedFramework" [selectedProgram]="program"
+                        [class]="'sidebar-level-selector'" (valueChange)='onLevelChange($event)'>
+                    </program-level-dropdown>
+                </div>
+            </div>
+            <div class="cybrex-cybersecurity-listing text-center">
+                <div class="cybrex-heading-content text-center">
+                    <h1>Welcome to your Cybersecurity Marketplace</h1>
+                    <h5>Find solutions mapped to your security gaps</h5>
+                </div>
+            </div>
+
+            <div class="cybrex-program-apps">
+                <div #container class="heatmap-container">
+                    <ng-container>
+                        <!-- Create a div where the chart will take place -->
+                        <bubble-chart #chart [options]="options" [dataseries]="dataseries"
+                            (bubbleClick)="chartFilter($event)">
+                        </bubble-chart>
+                    </ng-container>
+                </div>
+
+                <div class="cybrex-program-app-listing market-dropdown mt-0">
+                    <div class="topnav-mkp">
+                        <form role="form" class="form-inline flex-row">
+                            <p-multiSelect [options]="categoryList" [optionLabel]="'name'"
+                                [(ngModel)]="selectedCategories" [ngModelOptions]="{standalone: true}"
+                                [defaultLabel]="'Categories'" [maxSelectedLabels]="0" [displaySelectedLabel]="false"
+                                [showHeader]="false" [panelStyle]="{minWidth:'12em'}"
+                                [disabled]="(marketplaceResults.length > 0 || marketplaceAppendsResults.length > 0) ? 'false' : 'true'"
+                                (onChange)="addItems($event.value, 'category')">
+                            </p-multiSelect>
+
+
+                            <p-multiSelect [options]="controlList" [optionLabel]="'name'" [(ngModel)]="selectedControls"
+                                [ngModelOptions]="{standalone: true}" [defaultLabel]="'My Controls'"
+                                [maxSelectedLabels]="0" [displaySelectedLabel]="false" [showHeader]="false"
+                                [panelStyle]="{minWidth:'12em'}"
+                                [disabled]="marketplaceResults.length > 0 ? 'false' : 'true'"
+                                (onChange)="addItems($event.value, 'control')">
+                                <ng-template let-control pTemplate="item">
+                                    <div *ngIf="control.value.progress_complete == 0">{{control.value.name}} <span
+                                            class="text-danger">({{ (control.value.progress_complete/100) | percent
+                                            }})</span></div>
+                                    <div
+                                        *ngIf="control.value.progress_complete > 0 && control.value.progress_complete < 100">
+                                        {{control.value.name}} <span class="text-warning">({{
+                                            (control.value.progress_complete/100) | percent }})</span></div>
+                                    <div *ngIf="control.value.progress_complete == 100">{{control.value.name}} <span
+                                            class="text-success">({{ (control.value.progress_complete/100) | percent
+                                            }})</span></div>
+                                </ng-template>
+                            </p-multiSelect>
+
+
+                            <p-multiSelect [options]="subcontrolList" [optionLabel]="'sub_control_name'"
+                                [(ngModel)]="selectedSubcontrols" [ngModelOptions]="{standalone: true}"
+                                [defaultLabel]="'My Subcontrols'" [maxSelectedLabels]="0" [displaySelectedLabel]="false"
+                                [showHeader]="false" [panelStyle]="{minWidth:'12em'}"
+                                [disabled]="marketplaceResults.length > 0 ? 'false' : 'true'"
+                                (onChange)="addItems($event.value, 'subcontrol')">
+                                <ng-template let-subcontrol pTemplate="item">
+                                    <div *ngIf="subcontrol.value.progress == 0">{{subcontrol.value.sub_control_name}}
+                                        <span class="text-danger">({{ (subcontrol.value.progress/100) | percent
+                                            }})</span></div>
+                                    <div *ngIf="subcontrol.value.progress > 0 && subcontrol.value.progress < 100">
+                                        {{subcontrol.value.sub_control_name}} <span class="text-warning">({{
+                                            (subcontrol.value.progress/100) | percent }})</span></div>
+                                    <div *ngIf="subcontrol.value.progress == 100">{{subcontrol.value.sub_control_name}}
+                                        <span class="text-success">({{ (subcontrol.value.progress/100) | percent
+                                            }})</span></div>
+                                </ng-template>
+                            </p-multiSelect>
+
+                            <p-multiSelect [options]="typeList" [optionLabel]="'name'" [(ngModel)]="selectedTypes"
+                                [ngModelOptions]="{standalone: true}" [defaultLabel]="'Type'" [maxSelectedLabels]="0"
+                                [displaySelectedLabel]="false" [panelStyle]="{minWidth:'12em'}"
+                                [disabled]="(marketplaceResults.length > 0 || marketplaceAppendsResults.length > 0) ? 'false' : 'true'"
+                                (onChange)="addItems($event.value, 'type')" [styleClass]="pTypeClass">
+                            </p-multiSelect>
+
+                            <p-multiSelect [options]="providerList" [optionLabel]="'name'"
+                                [(ngModel)]="selectedProviders" [ngModelOptions]="{standalone: true}"
+                                [defaultLabel]="'Provider'" [maxSelectedLabels]="0" [displaySelectedLabel]="false"
+                                [showHeader]="false" [panelStyle]="{minWidth:'12em'}"
+                                [disabled]="(marketplaceResults.length > 0 || marketplaceAppendsResults.length > 0) ? 'false' : 'true'"
+                                (onChange)="addItems($event.value, 'provider')">
+                            </p-multiSelect>
+
+                            <div class="search-input ml-auto" #searchSolution>
+                                <input type="text" class="txt-search" [(ngModel)]="filterSolution"
+                                    [ngModelOptions]="{standalone: true}" placeholder="">
+                                <i *ngIf="filterSolution == ''" id="search-solution"
+                                    class="fa fa-search cursor-pointer"></i>
+                                <i *ngIf="filterSolution != ''" id="search-solution"
+                                    class="fa fa-times text-danger cursor-pointer" (click)="resetFilters($event)"></i>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="w-100 pr-0 selectize-items">
+                        <div class="row mr-0">
+                            <div class="col-9 pl-0">
+                                <ul *ngIf="selectedFilters.length > 0">
+                                    <ng-container *ngFor="let category of selectedFilters">
+                                        <li>
+                                            <span>{{ category.label }}</span>
+                                            <a (click)="removeItems(category);">
+                                                <i class="fa fa-times"></i>
+                                            </a>
+                                        </li>
+                                    </ng-container>
+                                </ul>
+                            </div>
+                            <div class="col-3 p-0">
+                                <a href="javascript:void(0)" class="pull-right m-0 vendor-txt py-2 pr-0"
+                                    (click)="vendorPopup()">Don't see a vendor? Tell us!</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="selected-category-section">
+                        <ng-container *ngIf="marketPlaceSearch">
+                            <div class="row w-100 abso-center">
+                                <h4 class="col-12 text-center font-16">Searching for solutions...</h4>
+                            </div>
+                        </ng-container>
+
+                        <ng-container *ngIf="marketplaceAppendsResults.length && !marketPlaceSearch">
+                            <div class="mp-apps row ">
+                                <div class="col-12 p-0">
+                                    <div class="mp-subcontols row"
+                                        *ngFor="let category of marketplaceAppendsResults; let i = index">
+                                        <div class="col-12">
+                                            <p-accordion [multiple]="true">
+                                                <p-accordionTab [selected]="true">
+                                                    <p-header>
+                                                        <span class="mp-subcontol-title"> {{ category?.name }} </span>
+                                                    </p-header>
+                                                    <ng-container *ngIf="category?.maped_solutions.length > 0">
+                                                        <div class="mp-subcontol-items">
+                                                            <ng-container
+                                                                *ngFor="let item of category?.maped_solutions">
+                                                                <div class="selected-category"
+                                                                    (click)="solutionsClickModal($event, item, {})">
+                                                                    <p class="sol-img"><img
+                                                                            src="{{ item?.solution_img }}"></p>
+                                                                    <p class="sol-name"
+                                                                        title="{{ item?.solution_name }}"> {{
+                                                                        item?.solution_name | slice: 0:29 }}
+                                                                        <span
+                                                                            *ngIf="item?.solution_name?.length > 29">...</span>
+                                                                    </p>
+                                                                    <p class="sol-type mt-auto text-black">{{
+                                                                        item?.solution_type }}</p>
+                                                                    <i class="apptega_api"
+                                                                        *ngIf="item?.apptega_api"><img
+                                                                            src="assets/images/app-icon.png"></i>
+                                                                </div>
+                                                            </ng-container>
+                                                        </div>
+                                                    </ng-container>
+                                                </p-accordionTab>
+                                            </p-accordion>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </ng-container>
+
+                        <ng-container *ngIf="marketplaceResults && marketplaceResults.length > 0">
+                            <div class="mp-apps row" *ngFor="let app of marketplaceResults">
+                                <div class="col-12 p-0">
+                                    <h3 class="mp-app-title">
+                                        <span class="app-icon"><img
+                                                src="https://s3.amazonaws.com/local.apptega.storage/images/app_icons/{{ app.icon }}"></span>
+                                        <span class="app-name">{{ app?.name }}</span>
+                                        <span *ngIf="app.progress_complete == 0" class="mp-percentage bg-danger">{{
+                                            app.progress_complete }}</span>
+                                        <span *ngIf="app.progress_complete > 0 && app.progress_complete < 100"
+                                            class="mp-percentage bg-warning">{{ app.progress_complete }}</span>
+                                        <span *ngIf="app.progress_complete == 100" class="mp-percentage bg-success">{{
+                                            app.progress_complete }}</span>
+                                    </h3>
+                                    <div class="mp-subcontols row"
+                                        *ngFor="let subcontrol of app.subcontrols; let i = index">
+                                        <div class="col-12">
+                                            <p-accordion [multiple]="true">
+                                                <p-accordionTab [selected]="true">
+                                                    <p-header>
+                                                        <span class="mp-subcontol-title"> {{ subcontrol.sub_control_name
+                                                            }} </span>
+                                                        <span class="custom-tooltip">
+                                                            <i class="fa fa-dot-circle-o" aria-hidden="true"></i>
+                                                            <span class="tooltip-text"
+                                                                [innerHtml]="subcontrol.sub_description"></span>
+                                                        </span>
+                                                        <div *ngIf="!subcontrol.progress"
+                                                            class="mp-percentage bg-danger">{{ subcontrol.progress }}
+                                                        </div>
+                                                        <div *ngIf="subcontrol.progress > 0 && subcontrol.progress < 100"
+                                                            class="mp-percentage bg-warning">{{ subcontrol.progress }}
+                                                        </div>
+                                                        <div *ngIf="subcontrol.progress == 100"
+                                                            class="mp-percentage bg-success">{{ subcontrol.progress }}
+                                                        </div>
+                                                    </p-header>
+                                                    <ng-container *ngIf="subcontrol.solutions.length > 0">
+                                                        <div class="mp-subcontol-items">
+                                                            <ng-container *ngFor="let item of subcontrol.solutions">
+                                                                <div class="selected-category"
+                                                                    (click)="solutionsClickModal($event, item, subcontrol)">
+                                                                    <p class="sol-img"><img
+                                                                            src="{{ item?.solution_img }}"></p>
+                                                                    <p class="sol-name"
+                                                                        title="{{ item?.solution_name }}"> {{
+                                                                        item?.solution_name | slice: 0:29 }}
+                                                                        <span
+                                                                            *ngIf="item?.solution_name?.length > 29">...</span>
+                                                                    </p>
+                                                                    <p class="sol-type mt-auto text-black">{{
+                                                                        item?.solution_type }}</p>
+                                                                    <i class="apptega_api"
+                                                                        *ngIf="item?.apptega_api"><img
+                                                                            src="assets/images/app-icon.png"></i>
+                                                                </div>
+                                                            </ng-container>
+                                                        </div>
+                                                    </ng-container>
+                                                    <ng-container *ngIf="subcontrol.solutions.length == 0">
+                                                        <div class="mp-subcontol-items">
+                                                            <p>There is no solutions.</p>
+                                                        </div>
+                                                    </ng-container>
+                                                </p-accordionTab>
+                                            </p-accordion>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <button *ngIf="loadMore && !marketPlaceSearch" type="button" class="btn btn-sm m-auto"
+                                    (click)="paginateControler();">Show More</button>
+                                <button *ngIf="loadMore && marketPlaceSearch" type="button"
+                                    class="btn btn-sm m-auto">Loading...</button>
+                            </div>
+                        </ng-container>
+                        <ng-container
+                            *ngIf="marketplaceResults.length == 0 && marketplaceAppendsResults.length == 0 && selectedFramework && !marketPlaceSearch">
+                            <div class="row w-100 abso-center no-solution">
+                                <ng-template
+                                    [ngIf]="isSearch && marketplaceResults.length == 0 && marketplaceAppendsResults.length == 0"
+                                    [ngIfElse]="noSolution">
+                                    <h4 class="col-12 text-center">No results for your search. Please try again or <a
+                                            class="clear-filter" (click)="resetFilters($event)">reset</a>.</h4>
+                                </ng-template>
+                                <ng-template #noSolution>
+                                    <h4 class="col-12 text-center">Currently, there are no solutions available for {{
+                                        selectedFramework?.name }}.</h4>
+                                </ng-template>
+                            </div>
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cybrex-inner-col-right">
+            <div class="cybrex-content-area-left-inner">
+                <div class="cybrex-quick-links">
+                    <h3 (click)="cyberXVideo = !cyberXVideo;">NEW HERE?</h3>
+                    <div class="right-sidebar" [ngClass]="{'expand': cyberXVideo }">
+                        <p class="watch-video">Watch this video to learn more.</p>
+                        <div class="c-pointer row m-0 video-section">
+                            <div class="col-12 video-outer">
+                                <span class="cursor-pointer" data-toggle="modal" data-target="#homeVideo"
+                                    (click)="open(content)">
+                                    <img class="img-responsive"
+                                        src="https://play.vidyard.com/g2TRCD1JagG79MSJ9kDYEE.jpg" />
+                                    <i class="fa fa-play" aria-hidden="true"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cybrex-content-area-left-inner">
+                <div class="cybrex-quick-links">
+                    <h3 (click)="savedSolutionsBoolean = !savedSolutionsBoolean;">SAVED</h3>
+                    <div class="right-sidebar" [ngClass]="{'expand': savedSolutionsBoolean }">
+                        <ng-container *ngFor="let solutions of allSolutions.saved | slice:0:showSaved;">
+                            <div class="row one-tile" (click)="solutionsPopup($event, solutions, 'saved')">
+                                <div class="col p-0">
+                                    <img class="w-100" [src]="solutions?.solution?.solution_img">
+                                </div>
+                                <div class="col-8 p-0 content">
+                                    {{ solutions?.solution?.solution_name | slice: 0:29 }}
+                                    <span *ngIf="solutions?.solution?.solution_name?.length > 29">...</span>
+                                </div>
+                            </div>
+                        </ng-container>
+                        <div class="row more-link" *ngIf="showSaved < allSolutions?.saved?.length">
+                            <div class="col-12 text-center">
+                                <a class="cursor" href="javascript:void(0)" (click)="increaseShow('saved')">More</a>
+                            </div>
+                        </div>
+                        <div class="row more-link"
+                            *ngIf="showSaved >= allSolutions?.saved?.length && allSolutions?.saved?.length > 4">
+                            <div class="col-12 text-center">
+                                <a class="cursor" href="javascript:void(0)" (click)="decreaseShow()">Less</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="cybrex-quick-links">
+                    <h3 (click)="contactedSolutionsBoolean = !contactedSolutionsBoolean;">CONTACTED</h3>
+                    <div class="right-sidebar" [ngClass]="{'expand': contactedSolutionsBoolean }">
+                        <ng-container *ngFor="let solutions of allSolutions.contacted">
+                            <div class="row one-tile m-0" (click)="solutionsPopup($event, solutions, 'contacted')">
+                                <div class="col p-0">
+                                    <img class="w-100" [src]="solutions?.solution?.solution_img">
+                                </div>
+                                <div class="col-8 p-0 content">
+                                    {{ solutions?.solution?.solution_name | slice: 0:29 }}
+                                    <span *ngIf="solutions?.solution?.solution_name?.length > 29">...</span>
+                                </div>
+                            </div>
+                            <div class="row small-note">
+                                <div class="col-12">
+                                    <p>Contacted: <span>{{ solutions?.updated_at | date: 'MMMM d, y h:mma' }}</span></p>
+                                </div>
+                            </div>
+                        </ng-container>
+                    </div>
+                </div>
+                <div class="cybrex-quick-links">
+                    <h3 (click)="implementedSolutionsBoolean = !implementedSolutionsBoolean;">IMPLEMENTED</h3>
+                    <div class="right-sidebar" [ngClass]="{'expand': implementedSolutionsBoolean }">
+                        <ng-container *ngFor="let solutions of allSolutions.implemented">
+                            <div class="row one-tile m-0" (click)="solutionsPopup($event, solutions, 'implemented')">
+                                <div class="col p-0">
+                                    <img class="w-100" [src]="solutions?.solution?.solution_img">
+                                </div>
+                                <div class="col-8 p-0 content">
+                                    {{ solutions?.solution?.solution_name | slice: 0:29 }}
+                                    <span *ngIf="solutions?.solution?.solution_name?.length > 29">...</span>
+                                </div>
+                            </div>
+                            <div class="row small-note">
+                                <div class="col-12">
+                                    <p>Implemented: <span>{{ solutions?.updated_at | date: 'MMMM d, y h:mma' }}</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </ng-container>
+                    </div>
+                </div>
+                <div class="manage-btn p-2">
+                    <button class="btn w-100" type="button"
+                        (click)="activityTriggerManage('manage-button-clicks-from-store-page')">Manage</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<ng-template #modalSolution let-modal>
+    <solution-hover [solutions]="solutionInfo">
+    </solution-hover>
+</ng-template>
+
+<ng-template #modalContent let-modal>
+    <solution-popup [solutionDetails]="currentSolutionDetail">
+    </solution-popup>
+</ng-template>
+
+<ng-template #modalVendor let-modal>
+    <form [formGroup]="vendorGroup" (ngSubmit)="onSubmit()" #vendorGroupDirective="ngForm" novalidate>
+        <div class="modal-header">
+            <h6 class="modal-title">Tell us about the vendor that you would like to see in the CyberXchange</h6>
+            <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="row">
+                <div class="col-12">
+                    <div class="row">
+                        <div class="col-6 pull-left">
+                            <div class="form-group mb-3">
+                                <input type="text" class="form-control" formControlName="vendorName"
+                                    placeholder="Vendor Name">
+                            </div>
+                        </div>
+                        <div class="col-6 pull-left">
+                            <div class="form-group mb-3">
+                                <input type="text" class="form-control" formControlName="productName"
+                                    placeholder="Product Name">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <textarea class="form-control" formControlName="description" placeholder="More Details"></textarea>
+                </div>
+                <div class="col-12 mt-3">
+                    <div class="row">
+                        <div class="col-8 pull-left">
+                            <div class="form-group">
+                                <input type="checkbox" formControlName="isContact" id="isContact" />
+                                I know the vendor and will be able to make an introduction
+                            </div>
+                        </div>
+                        <div class="col-4 pull-right">
+                            <div class="form-group">
+                                <div class="cybrex-input-field-row cybrex-add-client text-right">
+                                    <button type="submit" name="Save" value="save" class="btn">SEND</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</ng-template>
+
+<ng-template #content let-modal>
+    <div class="modal-header">
+        <button type="button" class="close text-white cybersecurity-modal-close" aria-label="Close"
+            (click)="modal.dismiss('Cross click')">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <div class="modal-body cybersecurity-modal">
+        <iframe controls
+            src="https://play.vidyard.com/g2TRCD1JagG79MSJ9kDYEE?disable_popouts=1&v=4.2.23&viral_sharing=0&embed_button=0&hide_playlist=1&color=FFFFFF&playlist_color=FFFFFF&play_button_color=2A2A2A&gdpr_enabled=1&type=inline&new_player_ui=1&autoplay=0&loop=0&muted=0&hidden_controls=0&vydata%5Butk%5D=efb9fd4aace01d4597d315f320d125b1&vydata%5Bportal_id%5D=4060880&vydata%5Bcontent_type%5D=landing-page&vydata%5Bcanonical_url%5D=https%3A%2F%2Fwww.apptega.com%2Fvideo-saas-0&vydata%5Bpage_id%5D=33144260887&vydata%5Bcontent_page_id%5D=33144260887&vydata%5Blegacy_page_id%5D=33144260887&vydata%5Bcontent_folder_id%5D=null&vydata%5Bcontent_group_id%5D=null&vydata%5Bab_test_id%5D=null&vydata%5Blanguage_code%5D=null"
+            frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+        </iframe>
+    </div>
+</ng-template>

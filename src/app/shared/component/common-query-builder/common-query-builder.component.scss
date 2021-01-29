@@ -1,0 +1,69 @@
+.paper-card {
+    box-shadow: none;
+}
+
+.form-control:disabled,
+.form-control[readonly] {
+    background: none;
+}
+
+.query_box {
+    min-height: 265px;
+    position: relative;
+    clear: both;
+    border: 1px solid #9aa0a5;
+}
+
+.red,
+.green {
+    span {
+        color: #fff;
+    }
+
+    .mat-chip-remove.mat-icon {
+        color: #fff;
+        opacity: 1;
+    }
+}
+
+.client_count {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+}
+
+.loading-center-icon {
+    position: fixed;
+}
+
+.border-table {
+    border-width: 1px;
+    border-style: solid;
+    border-color: #e1e8ee;
+}
+
+.crossbox a.paper-nav-toggle {
+    top: -6px;
+}
+
+.query-header {
+    padding: 10px 20px;
+    background-color: #f3f5f8;
+}
+
+.fw-900 {
+    font-weight: 900;
+}
+
+.card-body {
+    display: flex !important;
+    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    max-height: 650px;
+    overflow-y: auto;
+
+    .fieldSections {
+        width: 48%;
+    }
+}

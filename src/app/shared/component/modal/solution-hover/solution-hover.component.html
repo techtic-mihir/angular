@@ -1,0 +1,86 @@
+<div class="modal-header">
+    <h4 class="modal-title"> {{ solutions?.solution_name }} </h4>
+    <button type="button" class="close" aria-label="Close" (click)="closeModal();">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+<div class="modal-body cursor-pointer" (click)="solutionsPopup($event, solutions)">
+    <div class="row">
+        <div class="col-12">
+            <section class="marketplace-linked m-0">
+                <div class="row">
+                    <div class="col-3">
+                        <span class="marketplace-logo">
+                            <img [src]="solutions?.company?.logo">
+                        </span>
+                    </div>
+                    <div class="col-9">
+                        <section>
+                            <h6>Categories </h6>
+                            <p *ngIf="solutions.categories">
+                                <span
+                                    *ngFor="let category of solutions.categories | slice:0:showCategory; let last = last">
+                                    {{ category?.name }}
+                                    <ng-container *ngIf=!last>, </ng-container>
+                                </span>
+                                <span class="and-more" *ngIf="solutions.categories.length > showCategory"> and
+                                    {{solutions.categories.length - showCategory}} more. </span>
+                            </p>
+                        </section>
+                        <section class="mb-0">
+                            <h6>Sub-categories </h6>
+                            <p *ngIf="solutions.sub_categories">
+                                <span
+                                    *ngFor="let sub_category of solutions.sub_categories | slice:0:showSubcategory; let last = last">
+                                    {{ sub_category?.name }}
+                                    <ng-container *ngIf=!last>, </ng-container>
+                                </span>
+                                <span class="and-more" *ngIf="solutions.sub_categories.length > showSubcategory"> and
+                                    {{solutions.sub_categories.length - showSubcategory}} more. </span>
+                            </p>
+                        </section>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <div class="col-12">
+            <section>
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="mt-2"> Summary </h6>
+                        <span *ngIf="solutions?.company?.summary" class="solution-summary"
+                            [innerHtml]="solutions?.company?.summary.slice(0, 2000)"></span>
+                        <span *ngIf="solutions?.company?.summary && solutions?.company?.summary?.length > 2000"><a
+                                class="and-more"> More...</a></span>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-12">
+            <section class="d-flex justify-content-between">
+                <ng-container *ngIf="!hideSave">
+                    <button *ngIf="!solutions?.isSaved && !solutions?.isContacted && !solutions?.isImplemented"
+                        class="btn btn-success mr-2 btn-success-hover btn-save" type="button"
+                        (click)="saveSolution(solutions, 'saved');$event.stopPropagation();"><i
+                            class="fa fa-heart-o mr-2"></i>SAVE</button>
+                    <ng-container *ngIf="solutions?.isSaved || solutions?.isContacted || solutions?.isImplemented">
+                        <button pButton type="button" icon="pi pi-heart fa fa-heart-o" label="SAVE"
+                            (click)="$event.stopPropagation();"
+                            pTooltip="Solution was {{ solutions?.solution_status }} on {{ solutions?.isContactedDate | date: 'MMMM d, y h:mma' }}"
+                            tooltipPosition="top"></button>
+                    </ng-container>
+                </ng-container>
+                <button class="btn btn-success ml-auto" type="button">
+                    <span>MORE</span>
+                    <i class="fa fa-chevron-right pl-2"></i>
+                </button>
+            </section>
+        </div>
+    </div>
+</div>
+
+<ng-template #modalContent let-modal>
+    <solution-popup [hideSave]="hideSave" [solutionDetails]="currentSolutionDetail">
+    </solution-popup>
+</ng-template>

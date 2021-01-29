@@ -1,0 +1,72 @@
+/*
+* bubble chart css
+*/
+::ng-deep .d3-axis-line {
+    fill: black;
+    stroke-linejoin: round;
+}
+
+::ng-deep .bubbles {
+    stroke-width: 1px;
+    stroke: #289649;
+    cursor: pointer;
+}
+
+::ng-deep .bubbles:hover {
+    stroke-width: 2px;
+    stroke: #289649;
+    cursor: pointer;
+}
+
+::ng-deep .d3-chart {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 300px;
+    height: 100px;
+    background: rgba(245, 245, 245, 1);
+    font: Helvetica;
+    padding: 10px;
+    pointer-events: none;
+}
+
+.xlabel {
+    font-family: Verdana;
+    font-size: 0.75em;
+    fill: grey;
+}
+
+.ylabel {
+    font-family: Verdana;
+    font-size: 0.75em;
+    fill: grey;
+}
+
+::ng-deep .circles {
+    stroke: white;
+    fill-opacity: 0.5;
+}
+
+::ng-deep .circles:hover {
+    fill-opacity: 1;
+}
+
+::ng-deep .circlelabel {
+    fill: grey;
+    font-size: 1em;
+}
+
+::ng-deep .alertLine {
+    stroke-opacity: 0.5;
+    stroke: red;
+    stroke-width: 2;
+}
+
+::ng-deep .labelLines {
+    stroke: rgba(0, 0, 0, 0.2);
+    stroke-width: 2;
+}

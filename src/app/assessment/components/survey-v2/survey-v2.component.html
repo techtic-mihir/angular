@@ -1,0 +1,455 @@
+<iframe *ngIf="downloadFlag" [src]="downloadURL" style="width: 0%;height: 0;border: none;"></iframe>
+<div class="cybrex-inner-content">
+    <div class="cybrex-inner-content-cols">
+        <div class="cybrex-inner-col-left">
+            <div class="cybrex-user-listing-block">
+                <div class="cybrex-heading-content text-center">
+                    <p>WELCOME TO</p>
+                    <h1 class="color-grey fw-600">{{ questionnaire?.name }}</h1>
+                    <h5 class="color-grey" *ngIf="questionnaire && questionnaire.isAssignedTo">Assigned To: {{
+                        currentUser?.name }}</h5>
+                    <h5 class="color-grey fw-600">{{(scoreProgress | number: '1.1-1')}}% Complete</h5>
+                </div>
+                <!-- <div class="cybrex-input-fields cm-popup-contains"> -->
+                <div class="cybrex-input-fields">
+                    <ng-container *ngIf="questionnaire">
+                        <div class="cybrex-input-field-row">
+                            <form role="form" [formGroup]="questionForm">
+                                <div class="selected-category-section pt-0">
+                                    <ng-container>
+                                        <div class="mp-apps row">
+                                            <div class="col-12 p-0">
+                                                <div class="row mb-3">
+                                                    <div class="col-12">
+                                                        <div class="row">
+                                                            <div class="col-12">
+                                                                <div class="cybrex-measurement-area">
+                                                                    <ng-container>
+                                                                        <div class="text-right">
+                                                                            <a *authPermission="'SCORE_PROGRAM'"
+                                                                                mwlConfirmationPopover
+                                                                                (confirm)="computeAutoScoring()"
+                                                                                class="btn btn-default btn-sm"
+                                                                                popoverTitle="Confirm Scoring"
+                                                                                popoverMessage="You are going to override your program score. Are you sure you want to continue?">
+                                                                                Score Program
+                                                                            </a>
+                                                                            <div *authPermission="'EXPORT_ASSESSMENTS'"
+                                                                                class="dropdown ml-2">
+                                                                                <a class="dropbtn btn btn-sm">Reports
+                                                                                    <span class="caret"></span></a>
+                                                                                <div class="dropdown-content">
+                                                                                    <a
+                                                                                        (click)="exportAssessment('powerpoint');">PPT</a>
+                                                                                    <a
+                                                                                        (click)="exportAssessment('excel');">Excel</a>
+                                                                                    <a
+                                                                                        (click)="exportAssessment('pdf');">PDF</a>
+                                                                                    <a *ngIf="questionnaire?.name.includes('CMMC')"
+                                                                                        (click)="exportAssessment('ssp');">SSP</a>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </ng-container>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <ng-container *ngIf="questionnaire?.cmmcQuestions">
+                                                    <div class="mp-subcontols row">
+                                                        <div class="col-12">
+                                                            <p-accordion [multiple]="true">
+                                                                <p-accordionTab [selected]="false">
+                                                                    <p-header>
+                                                                        <div class="mp-subcontol-title pb-0">
+                                                                            <span
+                                                                                class="mp-subcontol-title pb-0 mr-1">CMMC
+                                                                                Information</span>
+                                                                            <span class="custom-tooltip">
+                                                                                <i class="fa fa-dot-circle-o"
+                                                                                    aria-hidden="true"></i>
+                                                                                <span class="tooltip-text"> Help Text
+                                                                                    Here </span>
+                                                                            </span>
+                                                                        </div>
+                                                                    </p-header>
+
+                                                                    <div class="mp-subcontols row">
+                                                                        <div class="col-12 pr-1">
+                                                                            <div class="row">
+                                                                                <div class="col-12">
+                                                                                    <ng-container
+                                                                                        *ngTemplateOutlet="cmmcQuestionTemplate; context: {questions : questionnaire.cmmcQuestions, questionForm : questionForm}">
+                                                                                    </ng-container>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-12 p-0">
+                                                                        <div class="text-right">
+                                                                            <a class="btn btn-sm"
+                                                                                (click)="onSubmit()">Save</a>
+                                                                        </div>
+                                                                    </div>
+                                                                </p-accordionTab>
+                                                            </p-accordion>
+                                                        </div>
+                                                    </div>
+                                                </ng-container>
+
+
+                                                <ng-container>
+                                                    <div class="mp-subcontols row"
+                                                        *ngFor="let category of questionnaire.questionCategory; let i = index;">
+                                                        <div class="col-12">
+                                                            <p-accordion [multiple]="true"
+                                                                (onOpen)="getQuestionsByCategory(category)">
+                                                                <p-accordionTab [selected]="false">
+                                                                    <p-header>
+                                                                        <div class="mp-subcontol-title pb-0">
+                                                                            <span
+                                                                                class="mp-subcontol-title pb-0 mr-1">{{
+                                                                                category.category | titlecase }}</span>
+                                                                            <span class="custom-tooltip">
+                                                                                <i class="fa fa-dot-circle-o"
+                                                                                    aria-hidden="true"></i>
+                                                                                <span class="tooltip-text">
+                                                                                    {{category.help_text}} </span>
+                                                                            </span>
+                                                                            <span
+                                                                                class="pull-right mr-4 answered_number"
+                                                                                *ngIf="getAssignee(category)">(Assigned:
+                                                                                {{ getAssignee(category) }})</span>
+                                                                        </div>
+                                                                    </p-header>
+
+                                                                    <div class="mp-subcontols row">
+                                                                        <div class="col-12 pr-1">
+                                                                            <div *ngIf="!questionsData[category.id]"
+                                                                                class="text-center">Loading...</div>
+                                                                            <div class="row">
+                                                                                <div class="col-12">
+                                                                                    <ng-container
+                                                                                        *ngFor="let item of parentData[category.id];">
+
+                                                                                        <ng-container
+                                                                                            *ngIf="!item[0].subcategory_id">
+                                                                                            <ng-container
+                                                                                                *ngTemplateOutlet="categoryTemplate; context: {subcategory : item, i : i, questionForm : questionForm}">
+                                                                                            </ng-container>
+                                                                                        </ng-container>
+
+                                                                                        <ng-container
+                                                                                            *ngIf="item[0].subcategory_id">
+                                                                                            <ng-container
+                                                                                                *ngTemplateOutlet="subCatagoryTemplate; context: {subcategory : item, i : i, questionForm : questionForm}">
+                                                                                            </ng-container>
+                                                                                        </ng-container>
+
+                                                                                    </ng-container>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-12 p-0">
+                                                                        <div class="text-right">
+                                                                            <a class="btn btn-sm"
+                                                                                (click)="onSubmit()">Save</a>
+                                                                        </div>
+                                                                    </div>
+                                                                </p-accordionTab>
+                                                            </p-accordion>
+                                                        </div>
+                                                    </div>
+                                                </ng-container>
+                                            </div>
+                                        </div>
+                                    </ng-container>
+                                </div>
+                                <div class="col-12 p-0 fixed-save-btn">
+                                    <div class="text-right">
+                                        <a class="btn btn-lg" (click)="onSubmit()">Save</a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </ng-container>
+                </div>
+            </div>
+        </div>
+        <div class="cybrex-inner-col-right"></div>
+    </div>
+</div>
+
+<ng-template #categoryTemplate let-subcategory='subcategory' let-i='i' let-questionForm='questionForm'>
+    <ng-container *ngFor="let item of subcategory; let k = index;">
+        <ng-container
+            *ngTemplateOutlet="questionTemplate; context: {questions : [item], i : i, k : k, questionForm : questionForm}">
+        </ng-container>
+        <div class="row pl-5">
+            <div class="col-12">
+                <ng-container
+                    *ngTemplateOutlet="questionTemplate; context: {questions : getChildren(childData[item.category_id], item), i : i, k : k, questionForm : questionForm}">
+                </ng-container>
+            </div>
+        </div>
+    </ng-container>
+</ng-template>
+
+<ng-template #subCatagoryTemplate let-subcategory='subcategory' let-i='i' let-questionForm='questionForm'>
+    <p-accordion [multiple]="true">
+        <p-accordionTab [selected]="false">
+            <p-header>
+                <div class="mp-subcontol-title pb-0">
+                    {{ subcategory[0].subcategory.subcategory | titlecase }}
+                </div>
+            </p-header>
+
+            <ng-container *ngFor="let item of subcategory; let k = index;">
+                <ng-container
+                    *ngTemplateOutlet="questionTemplate; context: {questions : [item], i : i, k : k, questionForm : questionForm}">
+                </ng-container>
+                <div class="row pl-5">
+                    <div class="col-12">
+                        <ng-container
+                            *ngTemplateOutlet="questionTemplate; context: {questions : getChildren(childData[item.category_id], item), i : i, k : k, questionForm : questionForm}">
+                        </ng-container>
+                    </div>
+                </div>
+            </ng-container>
+        </p-accordionTab>
+    </p-accordion>
+</ng-template>
+
+<ng-template #questionTemplate let-questions='questions' let-i='i' let-k='k' let-questionForm='questionForm'>
+    <form role="form" [formGroup]="questionForm">
+        <ng-container formArrayName="questions">
+            <ng-container *ngFor="let question of questions;">
+                <ng-container [formGroupName]="question?.counter">
+                    <div class="question-full-width">
+                        <div class="row mb-3">
+                            <div class="col-12 single-que align-self-center">
+                                <span class="font-400 mr-2">
+                                    {{ question?.question }}
+                                    <span *ngIf="question?.help_text" class="custom-tooltip question-tooltip">
+                                        <i aria-hidden="true" class="fa fa-dot-circle-o"> </i>
+                                        <span class="tooltip-text">
+                                            {{ question?.help_text }}
+                                        </span>
+                                    </span>
+                                </span>
+                                <p *ngIf="question?.subcontrols.length > 0" class="font-400 sub-section">
+                                    <span class="sub-head"><b>Subcontrol:</b></span>
+                                    <ng-container *ngFor="let subcontrol of question.subcontrols; let last = last">
+                                        {{ subcontrol.name }} <span *ngIf="!last">, </span>
+                                    </ng-container>
+                                </p>
+                            </div>
+                            <div class="col-12 single-que-ans">
+                                <div class="row">
+                                    <div class="col-3">
+                                        <ng-container [ngSwitch]="question?.response_type">
+                                            <ng-container *ngSwitchCase="'radio'">
+                                                <ng-container
+                                                    *ngFor="let item of question?.response_json?.radio; let j = index;">
+                                                    <div class="radio mb-2">
+                                                        <input
+                                                            id="{{ !question.subcategory_id ? '' : 'sub_' }}answer_radio_{{ i }}_{{ question?.id }}_{{ j }}"
+                                                            type="radio"
+                                                            name="{{ !question.subcategory_id ? '' : 'sub_' }}answer_radio_{{ i }}_{{ question?.id }}"
+                                                            [checked]="item.selected" [value]="item?.value"
+                                                            (change)='setAnswer($event, question, item)' />
+                                                        <label
+                                                            for="{{ !question.subcategory_id ? '' : 'sub_' }}answer_radio_{{ i }}_{{ question?.id }}_{{ j }}"
+                                                            [ngClass]="{'grey_back' : question?.old_answer?.answer == item?.value}">{{
+                                                            item?.label }}</label>
+                                                    </div>
+                                                </ng-container>
+                                            </ng-container>
+                                            <ng-container *ngSwitchCase="'checkbox'">
+                                                <ng-container
+                                                    *ngFor="let item of question?.response_json?.checkbox; let j = index;">
+                                                    <div class="checkbox checkbox-primary p-0 mb-2">
+                                                        <input id="answer_checkbox_{{ i }}_{{ question?.id }}_{{ j }}"
+                                                            type="checkbox"
+                                                            name="answer_checkbox_{{ i }}_{{ question?.id }}"
+                                                            [checked]="item?.checked" [value]="item?.value"
+                                                            (change)='setAnswer($event, question, item)' />
+                                                        <label
+                                                            for="answer_checkbox_{{ i }}_{{ question?.id }}_{{ j }}">{{
+                                                            item?.label }}</label>
+                                                    </div>
+                                                </ng-container>
+                                            </ng-container>
+                                            <ng-container *ngSwitchCase="'textbox'">
+                                                <input id="value_{{ question?.id }}" name="key_{{question?.id }}"
+                                                    type="text" formControlName="answer" autocomplete="off"
+                                                    class="input_answer" />
+                                            </ng-container>
+                                            <ng-container *ngSwitchCase="'scale_radio'">
+                                                <ng-container
+                                                    *ngFor="let item of question?.response_json?.scale_radio; let j = index;">
+                                                    <div class="radio mb-2">
+                                                        <input
+                                                            id="{{ !question.subcategory_id ? '' : 'sub_' }}answer_scale_radio_{{ i }}_{{ question?.id }}_{{ j }}"
+                                                            type="radio"
+                                                            name="{{ !question.subcategory_id ? '' : 'sub_' }}answer_scale_radio_{{ i }}_{{ question?.id }}"
+                                                            [checked]="item.selected" [value]="item?.value"
+                                                            (change)='setAnswer($event, question, item)' />
+                                                        <label
+                                                            for="{{ !question.subcategory_id ? '' : 'sub_' }}answer_scale_radio_{{ i }}_{{ question?.id }}_{{ j }}"
+                                                            [ngClass]="{'grey_back' : question?.old_answer?.answer == item?.value}">{{
+                                                            item?.label }}</label>
+                                                    </div>
+                                                </ng-container>
+                                            </ng-container>
+                                            <ng-container *ngSwitchCase="'cmmc_radio'">
+                                                <ng-container
+                                                    *ngFor="let item of question?.response_json?.cmmc_radio; let j = index;">
+                                                    <div class="radio mb-2">
+                                                        <input
+                                                            id="{{ !question.subcategory_id ? '' : 'sub_' }}answer_cmmc_radio_{{ i }}_{{ question?.id }}_{{ j }}"
+                                                            type="radio"
+                                                            name="{{ !question.subcategory_id ? '' : 'sub_' }}answer_cmmc_radio_{{ i }}_{{ question?.id }}"
+                                                            [checked]="item.selected" [value]="item?.value"
+                                                            (change)='setAnswer($event, question, item)' />
+                                                        <label
+                                                            for="{{ !question.subcategory_id ? '' : 'sub_' }}answer_cmmc_radio_{{ i }}_{{ question?.id }}_{{ j }}">{{
+                                                            item?.label }}</label>
+                                                    </div>
+                                                </ng-container>
+                                            </ng-container>
+                                            <ng-container *ngSwitchCase="'met_radio'">
+                                                <ng-container
+                                                    *ngFor="let item of question?.response_json?.met_radio; let j = index;">
+                                                    <div class="radio mb-2">
+                                                        <input
+                                                            id="{{ !question.subcategory_id ? '' : 'sub_' }}answer_met_radio_{{ i }}_{{ question?.id }}_{{ j }}"
+                                                            type="radio"
+                                                            name="{{ !question.subcategory_id ? '' : 'sub_' }}answer_met_radio_{{ i }}_{{ question?.id }}"
+                                                            [checked]="item.selected" [value]="item?.value"
+                                                            (change)='setAnswer($event, question, item)' />
+                                                        <label
+                                                            for="{{ !question.subcategory_id ? '' : 'sub_' }}answer_met_radio_{{ i }}_{{ question?.id }}_{{ j }}">{{
+                                                            item?.label }}</label>
+                                                    </div>
+                                                </ng-container>
+                                            </ng-container>
+                                        </ng-container>
+                                    </div>
+                                    <div class="col-6 px-0">
+                                        <div class="timestamp">
+                                            <ng-container>
+                                                <textarea id="require_note_{{ question?.id }}_{{ i }}"
+                                                    name="require_note_{{ question?.id }}" type="text"
+                                                    formControlName="require_note" autocomplete="off"
+                                                    class="col-12 note-text" placeholder="Enter notes">
+                                                </textarea>
+                                            </ng-container>
+                                        </div>
+                                        <ng-container>
+                                            <div class="row doc-modal-links">
+                                                <a (click)="showDocuments(question)" class="btn-link attach-doc-link">
+                                                    <span class="document-count ml-0">{{ question?.documents?.length
+                                                        }}</span>
+                                                    Documents/Links
+                                                </a>
+                                                <span class="p-0">{{ (question.answer) ? (question.answer.user.name +'
+                                                    '+ (question.answer.created_at | date: 'MM-dd-yyyy')) : '' }}</span>
+                                            </div>
+                                        </ng-container>
+                                    </div>
+                                    <div class="col-3 main-notable-practice">
+                                        <p *ngIf="question?.require_notable_practice"
+                                            class="checkbox checkbox-primary p-0">
+                                            <input class="notable-practice" name="notable_practice_{{ question?.id }}"
+                                                type="checkbox" formControlName="notable_practice" />
+                                            <label class="pb-1">Notable Practice</label>
+                                        </p>
+                                        <p *ngIf="question?.follow_up" class="checkbox checkbox-primary p-0">
+                                            <input class="notable-practice" name="follow_up_{{ question?.id }}"
+                                                type="checkbox" formControlName="follow_up" />
+                                            <label class="pb-1">Mark for Follow-up</label>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+            </ng-container>
+        </ng-container>
+    </form>
+</ng-template>
+
+<ng-template #cmmcQuestionTemplate let-questions='questions' let-questionForm='questionForm'>
+    <form role="form" [formGroup]="questionForm">
+        <ng-container formArrayName="cmmcQuestions">
+            <ng-container *ngFor="let question of questions; let i = index;">
+                <ng-container [formGroupName]="i">
+                    <div class="question-full-width">
+                        <div class="row mb-3">
+                            <div class="col-12 single-que align-self-center">
+                                <span class="font-400 mr-2">
+                                    {{ question?.question }}
+                                    <span *ngIf="question?.help_text" class="custom-tooltip question-tooltip">
+                                        <i aria-hidden="true" class="fa fa-dot-circle-o"> </i>
+                                        <span class="tooltip-text">
+                                            {{ question?.help_text }}
+                                        </span>
+                                    </span>
+                                </span>
+                            </div>
+                            <div class="col-12 single-que-ans">
+                                <div class="row">
+                                    <div class="col-3">
+                                        <ng-container [ngSwitch]="question?.response_type">
+                                            <ng-container *ngSwitchCase="'radio'">
+                                                <ng-container
+                                                    *ngFor="let item of question?.response_json?.radio; let j = index;">
+                                                    <div class="radio mb-2">
+                                                        <input
+                                                            id="{{ !question.subcategory_id ? '' : 'sub_' }}answer_radio_{{ question?.id }}_{{ j }}"
+                                                            type="radio"
+                                                            name="{{ !question.subcategory_id ? '' : 'sub_' }}answer_radio_{{ question?.id }}"
+                                                            [checked]="item.selected" [value]="item?.value"
+                                                            (change)='setCmmcAnswer($event, i)' />
+                                                        <label
+                                                            for="{{ !question.subcategory_id ? '' : 'sub_' }}answer_radio_{{ question?.id }}_{{ j }}">{{
+                                                            item?.label }}</label>
+                                                    </div>
+                                                </ng-container>
+                                            </ng-container>
+                                            <ng-container *ngSwitchCase="'textbox'">
+                                                <input id="value_{{ question?.id }}" name="key_{{question?.id }}"
+                                                    type="text" formControlName="answer" autocomplete="off"
+                                                    class="input_answer" />
+                                            </ng-container>
+                                            <ng-container *ngSwitchCase="'cmmc_radio'">
+                                                <ng-container
+                                                    *ngFor="let item of question?.response_json?.cmmc_radio; let j = index;">
+                                                    <div class="radio mb-2">
+                                                        <input
+                                                            id="{{ !question.subcategory_id ? '' : 'sub_' }}answer_cmmc_radio_{{ question?.id }}_{{ j }}"
+                                                            type="radio"
+                                                            name="{{ !question.subcategory_id ? '' : 'sub_' }}answer_cmmc_radio_{{ question?.id }}"
+                                                            [checked]="item.selected" [value]="item?.value"
+                                                            (change)='setCmmcAnswer($event, i)' />
+                                                        <label
+                                                            for="{{ !question.subcategory_id ? '' : 'sub_' }}answer_cmmc_radio_{{ question?.id }}_{{ j }}">{{
+                                                            item?.label }}</label>
+                                                    </div>
+                                                </ng-container>
+                                            </ng-container>
+                                        </ng-container>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+            </ng-container>
+        </ng-container>
+    </form>
+</ng-template>

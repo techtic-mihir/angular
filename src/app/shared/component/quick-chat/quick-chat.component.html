@@ -1,0 +1,249 @@
+<!-- Loader section -->
+<p-toast styleClass="custom-toast" position="top-right"></p-toast>
+<div class="loading-center-icon" *ngIf="chatloader">
+    <img src="assets/img/ben-loading-icon-v2.gif">
+</div>
+<!-- chat Form  -->
+<form class="form-material" [formGroup]="chatForm" #chatFormDirective="ngForm" novalidate *ngIf="chatFormStep == 1">
+    <div class="modal-header r-0 bg-primary">
+        <h6 class="modal-title text-white" id="exampleModalLabel">Chat</h6>
+        <a href="javascript:void(0)" (click)="chatClose()" data-dismiss="modal" aria-label="Close"
+            class="paper-nav-toggle paper-nav-white active"><i></i></a>
+    </div>
+    <div class="modal-body chat-min no-p no-b">
+        <div class="row mt-2">
+            <div class="col col-sm-12">
+                <search-autocomplete placeholder="Search" class="text-dark" [form]="chatForm"
+                    [type]="['group', 'employee', 'households']" [formControlChild]="chatForm.controls.entity"
+                    (valueChange)='entitySelect($event)' (addNewAction)='addNewActionClicked($event)'>
+                </search-autocomplete>
+            </div>
+        </div>
+        <div class="row m-0 mb-2" *ngIf="chatForm.get('entityType').value && chatForm.controls.entity.value">
+            <div class="col col-sm-12" *ngIf="convInfo.email">
+                Email : {{ convInfo.email }}
+            </div>
+            <div class="col col-sm-12" *ngIf="convInfo.phone">
+                Phone: {{ convInfo.phone }}
+            </div>
+            <div class="col col-sm-12">
+                Type : {{ convInfo.type }}
+            </div>
+        </div>
+        <div class="row mt-1 m-0" *ngIf="chatForm.get('optOut').value">
+            <div class="col col-sm-12">
+                <div class="alert alert-danger">
+                    <p class="p-0 m-0">Client has opted out</p>
+                </div>
+            </div>
+        </div>
+        <div *ngIf="!chatForm.get('optOut').value">
+            <div class="row mt-1">
+                <div class="col col-sm-12">
+                    <mat-form-field class="col-md-12">
+                        <mat-select (selectionChange)="onConversationChange($event.value)"
+                            placeholder="Select Conversation" formControlName="selectConversation">
+                            <mat-option *ngFor="let chat of chat_data" [value]="chat">
+                                <span class="col-sm-8 text-left pull-left">
+                                    {{ chat?.name }}
+                                </span>
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            </div>
+            <div class="row mt-1" *ngIf="allow_custom_message">
+                <div class="col col-sm-12">
+                    <mat-form-field class="col-md-4 pull-right">
+                        <mat-select name="dynamicFields" placeholder="Dynamic Fields" formControlName="dynamicFields"
+                            (selectionChange)="addCustomField($event.value)">
+                            <mat-optgroup *ngFor="let fieldGroup of dynamicFieldsVal | keyvalue ; let groupIndex=index;"
+                                class="bold-font" [label]="fieldGroup.key">
+                                <mat-option *ngFor="let fields of fieldGroup.value" [value]="fields.field_value">
+                                    {{ fields.field_name }}
+                                </mat-option>
+
+                            </mat-optgroup>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field class="col-md-12">
+                        <div mwlTextInputHighlightContainer class="text-input-highlight-container">
+                            <textarea mwlTextInputElement #textarea (input)="addTags($event.target.value)"
+                                formControlName="customMessage" matInput placeholder="Message" [mention]="mention"
+                                [mentionConfig]="{ triggerChar:'[', labelKey:'field_name', mentionSelect: onMentionSelect }"
+                                rows="5" id="customMessage" #customMessage class="msg-line-height"></textarea>
+                            <mwl-text-input-highlight [tags]="tags" [tagCssClass]="'bg-blue'"
+                                [textInputElement]="textarea">
+                            </mwl-text-input-highlight>
+                        </div>
+                    </mat-form-field>
+                </div>
+            </div>
+            <ng-container *ngIf="settings?.instance_type == 'advisor';then advisorSelectionTemplate"></ng-container>
+            <ng-container *ngIf="settings?.instance_type == 'sales'; then saledSelectionTemplate"></ng-container>
+            <ng-template #advisorSelectionTemplate>
+                <div class="row mt-2" formArrayName="advisor"
+                    *ngIf="chatForm.get('selectConversation').value && chatForm.get('selectConversation').value.name == 'Schedule Meeting'">
+                    <div class="col col-sm-12" *ngFor="let member of chatForm.controls['advisor']['controls'];
+						let i=index;let first = first; let last = last">
+                        <div class="col-sm-12 pull-left">
+                            <ul>
+                                <li>
+                                    <h4> Advisor {{i + 1}}
+                                        <span class="">
+                                            <i style="cursor:pointer;" class="fa fa-minus pull-right" aria-hidden="true"
+                                                (click)="removeAdvisor(i)"
+                                                *ngIf="chatForm.controls.advisor.controls.length > 1"></i>
+                                            <i style="cursor:pointer;" class="fa fa-plus pull-right" aria-hidden="true"
+                                                (click)="addAdvisor()"
+                                                *ngIf="chatForm.controls.advisor.controls.length < 2 && last"></i>
+                                        </span>
+                                    </h4>
+                                </li>
+                            </ul>
+                            <div class="row" [formGroupName]="i">
+                                <mat-form-field class="col-md-12 pull-left">
+                                    <mat-select placeholder="Select Advisor" formControlName="advisor_id">
+                                        <mat-option *ngFor="let advisor of advisors" [value]="advisor.id">
+                                            {{ advisor.name }}
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </ng-template>
+            <ng-template #saledSelectionTemplate>
+                <div class="row mt-2" *ngIf="chatForm.get('selectConversation').value
+					&& chatForm.get('selectConversation').value.name == 'Schedule Meeting'">
+                    <div class="col-md-12">
+                        <mat-form-field class="col-md-12">
+                            <mat-select placeholder="Select Sales" formControlName="salesId">
+                                //<mat-option value="">No Sales</mat-option>
+                                <mat-option *ngFor="let sale of sales" [value]="sale.id">
+                                    {{ sale.name }}
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                </div>
+            </ng-template>
+            <div class="row mt-1">
+                <div class="col col-sm-12">
+                    <div class="pull-left col col-sm-6">
+                        <mat-form-field>
+                            <mat-select placeholder="Select Time" (selectionChange)="oneTimeTypeChange($event.value)"
+                                formControlName="selectTime">
+                                <mat-option value="now"> Now </mat-option>
+                                <mat-option value="tomorrow"> Tomorrow </mat-option>
+                                <mat-option value="custom"> Custom </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="pull-left col-sm-2 notifyCheck">
+                        <mat-checkbox aria-label="notify" id="notify" labelPosition="after" name="notify"
+                            formControlName="notify">notify</mat-checkbox>
+                    </div>
+                    <div class="col-sm-2 notifyCheck pull-left"
+                        *ngIf="chatForm?.get('selectConversation')?.value?.name == 'Custom'">
+                        <mat-checkbox aria-label="customLibrary" id="customLibrary" labelPosition="after"
+                            name="customLibrary" formControlName="custom_library" (change)="validateChatName()">Save
+                        </mat-checkbox>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2" *ngIf="chatForm.get('selectTime').value =='custom'">
+                <div class="col col-sm-12">
+                    <mat-form-field class="col-md-6">
+                        <input matInput [matDatepicker]="oneTimeDate" formControlName="dateTime"
+                            placeholder="Select Date" (click)="oneTimeDate.open()" [min]="now">
+                        <mat-datepicker-toggle matSuffix [for]="oneTimeDate"></mat-datepicker-toggle>
+                        <mat-datepicker #oneTimeDate></mat-datepicker>
+                    </mat-form-field>
+
+                    <mat-form-field class="col-sm-6">
+                        <mat-select placeholder="Time" formControlName="time">
+                            <mat-option *ngFor="let time of intervals" [value]="time">{{ time }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            </div>
+            <div class="row mt-1"
+                *ngIf="chatForm?.get('custom_library')?.value && chatForm?.get('selectConversation')?.value?.name == 'Custom'">
+                <div class="col col-sm-12">
+                    <mat-form-field class="example-full-width col-md-12">
+                        <input class="form-control" type="text" formControlName="custom_chat_name"
+                            placeholder="Chat Name" matInput>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col col-sm-12 mt-2 mb-2">
+                    <label class="col-sm-12 pull-left" id="follow-method-radio-label">
+                        How would you like to communicate?
+                    </label>
+                    <mat-radio-group (change)="onChangeSendType($event.value)" class="col-sm-12 pull-left"
+                        aria-label="select an follow method" formControlName="sendFollowup">
+                        <mat-radio-button *ngFor="let send of sendTypes" [value]="send?.value">
+                            {{ send?.label }}
+                        </mat-radio-button>
+                    </mat-radio-group>
+                </div>
+            </div>
+
+
+
+            <div class="row" *ngIf="showEmailsubject">
+                <div class="col col-sm-12">
+                    <mat-form-field class="col col-sm-12 mt-2 mb-2">
+                        <input matInput class="form-control" formControlName="subject" placeholder="Subject">
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <input matInput hidden="true" placeholder="Household Id" aria-label="householdId" name="householdId"
+                formControlName="householdId">
+            <input matInput hidden="true" placeholder="Employee Id" aria-label="Employee Id" name="employeeId"
+                formControlName="employeeId">
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button *ngIf="([1,3,4,5].indexOf(chatForm.get('assignment_type').value) > -1)" class="btn btn-primary s-12"
+            [disabled]="chatFormActionDisable" [ngClass]="chatFormActionDisable ? 'btn-disabled' : ''"
+            (click)="onChatsubmit()">
+            {{ chatFormActionDisable ? 'Sending...' : 'Send' }}
+        </button>
+        <button *ngIf="chatForm.get('assignment_type').value == 2" class="btn btn-primary s-12"
+            (click)="groupQuickChat()">
+            Send
+        </button>
+        <button *ngIf="chatForm.get('assignment_type').value == ''" class="btn btn-primary s-12">
+            Send
+        </button>
+    </div>
+</form>
+
+<add-member [entity]="entity_types" (modalclose)="onCancel($event)" [entityDropInfo]="entityDropInfo"
+    (memberAdded)="patchChatForm($event)" *ngIf="chatFormStep == 2"></add-member>
+
+<form class="form-material" *ngIf="chatFormStep == 3">
+    <div class="modal-header r-0 bg-primary">
+        <h6 class="modal-title text-white" id="exampleModalLabel">Group Information</h6>
+        <a href="javascript:void(0)" data-dismiss="modal" aria-label="Close"
+            class="paper-nav-toggle paper-nav-white active" (click)="onCancel()"><i></i></a>
+    </div>
+    <div class="col-md-12 confirm-span">
+        <span>Are you sure you want to send {{quickGroup?.conversation_name}} to {{quickGroup?.group_name}} ?</span>
+    </div>
+    <div class="col-md-12 confirm-span">
+        <span *ngIf="quickGroup?.group_household == 0">This group has no household.</span>
+        <span *ngIf="quickGroup?.group_household > 0">This group has {{quickGroup?.group_household}} households.</span>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary s-12" (click)="onChatsubmit()">Send</button>
+        <button class="btn btn-primary s-12" (click)="onCancel()">Cancel</button>
+    </div>
+</form>

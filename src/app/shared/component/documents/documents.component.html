@@ -1,0 +1,251 @@
+<div class="container-fluid pr-0">
+    <p-toast styleClass="custom-toast" position="top-right"></p-toast>
+    <p-confirmDialog class="custom-confirmdialog-box" header="Confirmation" icon="fa fa-question-circle">
+    </p-confirmDialog>
+    <div class="loading-center-icon" *ngIf="loader">
+        <img src="assets/img/ben-loading-icon-v2.gif">
+    </div>
+    <div class="row d-flex bd-highlight no-gutters">
+        <div class="documents-filter-section">
+            <div class="p-3">
+                <a href="javascript:void(0)" data-toggle="modal" data-target="#createDocumentModal"
+                    (click)="openCreateDocumentmodel()" class="btn btn-primary btn-lg mb-4">Add Document</a>
+                <ul class="sidebar-menu">
+                    <h6>Tags</h6>
+                    <li class="treeview" *ngFor="let tag of documentTags;  let i = index;">
+                        <mat-checkbox [checked]="(tag.checked==true) ? true : false"
+                            (change)="filterDocuments('tag',tag.tag,i)" class="example-margin">{{tag.tag | titlecase}}
+                        </mat-checkbox>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="divider">
+                        <hr>
+                    </li>
+                </ul>
+                <ul class="sidebar-menu">
+                    <h6>Created By</h6>
+                    <li class="treeview" *ngFor="let user of createdBy;  let i = index;">
+                        <mat-checkbox [checked]="user.checked" class="example-margin"
+                            (change)="filterDocuments('user',user.id ,i)">{{user.name | titlecase}}</mat-checkbox>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="relative flex-fill b-l height-full white">
+            <div class="filter-header row">
+                <div class="col-sm-1">
+                    <a (click)="redirectBack()" class="btn btn-primary" href="javascript:void(0)">Back</a>
+                </div>
+                <mat-form-field class="offset-md-4 col-sm-2">
+                    <input [(ngModel)]="filter_from" name="filter_from_date" id="filter_from_date" [max]="todayDate"
+                        matInput [matDatepicker]="filter_from_date" placeholder="From"
+                        (click)="filter_from_date.open()">
+                    <mat-datepicker-toggle matSuffix [for]="filter_from_date"></mat-datepicker-toggle>
+                    <mat-datepicker #filter_from_date></mat-datepicker>
+                </mat-form-field>
+                <mat-form-field class="col-sm-2">
+                    <input [(ngModel)]="filter_to" name="filter_to_date" id="filter_to_date" [min]="filter_from"
+                        [max]="todayDate" matInput [matDatepicker]="filter_to_date" placeholder="To"
+                        (click)="filter_to_date.open()">
+                    <mat-datepicker-toggle matSuffix [for]="filter_to_date"></mat-datepicker-toggle>
+                    <mat-datepicker #filter_to_date></mat-datepicker>
+                </mat-form-field>
+                <div class="col-sm-2">
+                    <a (click)="filterDocuments('date', 'date', '')" class="btn btn-primary"
+                        href="javascript:void(0)">Apply</a>
+
+                    <a class="reset-btn" (click)="resetFilter()" href="javascript:void(0)">Reset</a>
+                </div>
+            </div>
+            <div class="documents-list" *ngIf="documents.length > 0 && !loader">
+                <table class="table table-striped table-hover r-0">
+                    <tbody>
+                        <tr *ngFor="let document of documents; let i = index;">
+                            <td style="width: 10px;">
+                                <i class="s-24 {{document?.file_type}}"></i>
+                            </td>
+                            <td class="c-pointer" (click)="downloadDocument(document)">
+                                <div>
+                                    <strong>{{ document?.document_title | titlecase }}</strong>
+                                </div>
+                                <mat-chip-list class="taglist">
+                                    <mat-chip *ngFor="let tag of document.tags">
+                                        <span>{{ tag.tag }}</span>
+                                    </mat-chip>
+                                </mat-chip-list>
+                            </td>
+                            <td class="text-right date-list">
+                                <i class="icon icon-clock-o"></i>
+                                {{ document?.created_at | date:'MM-dd-yyyy' }}
+                            </td>
+                            <td class="text-center edit-document">
+                                <a href="#modelEditDocument" data-toggle="modal" data-target="#modelEditDocument"
+                                    (click)="modelUploads(document)">
+                                    <i class="s-18 s-m icon-pencil pencil-margin"></i>
+                                </a>
+                                <a href="#deleteDocumentPopup" data-toggle="modal"
+                                    (click)="deleteDocumentPopup(document)">
+                                    <i class="s-18 s-m text-danger icon-close"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <ngb-pagination class="d-flex justify-content-end" [pageSize]="paginationPerPage"
+                    [collectionSize]="paginationTotal" [maxSize]="5" [rotate]="true" [ellipses]="false"
+                    [boundaryLinks]="true" [(page)]="page" aria-label="Default pagination"
+                    (pageChange)="pageChange($event)"></ngb-pagination>
+            </div>
+            <div class="documents-list" *ngIf="documents.length == 0 && !loader">
+                <h5 class="p-4 no-data"> No data found. </h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="createDocumentModal" tabindex="-1" role="dialog" aria-labelledby="createDocumentModal"
+    data-backdrop="static">
+    <div class="modal-dialog modal-md" role="folderModal">
+        <div class="modal-content b-0">
+            <div class="modal-header r-0 bg-primary">
+                <h6 class="modal-title text-white" id="exampleModalLabel">Add Document</h6>
+                <a href="#" (click)="closeModel()" data-dismiss="modal" aria-label="Close"
+                    class="paper-nav-toggle paper-nav-white active">
+                    <i></i>
+                </a>
+            </div>
+            <form class="form-material" [formGroup]="uploadForm" #uploadFormDirective="ngForm" novalidate
+                (ngSubmit)="onUploadsubmits()">
+                <div class="modal-body no-p no-b">
+                    <div class="col-sm-12 doc-drag-drop rm-doc-padding mt-2 mb-3">
+                        <input type="file" formControlName="upload" ng2FileSelect [uploader]="documentUploader"
+                            (change)="uploadFiles()" class="chooser" #fileInput />
+                        <div ng2FileDrop [ngClass]="{'nv-file-over': hasBaseDropZoneOver}"
+                            (fileOver)="fileOverBase($event)" [uploader]="documentUploader" class="well my-drop-zone">
+                            <i class="icon-download"></i> Drag and drop to upload or <a href="javascript:void(0)"
+                                (click)="fileInput.click()">browse for files</a>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 word-break">
+                        <table class="table" *ngIf="documentUploader.queue.length > 0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let item of documentUploader.queue">
+                                    <td><strong>{{ item?.file?.name }}</strong></td>
+                                    <td nowrap>
+                                        <button type="button" class="btn btn-danger btn-xs" (click)="item.remove()">
+                                            <span class="glyphicon glyphicon-trash"></span> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <mat-form-field class="example-full-width col-sm-12">
+                        <mat-chip-list #documentchipList>
+                            <mat-chip *ngFor="let tag of tags" [removable]="removable" (removed)="remove(tag)">
+                                {{tag}}
+                                <mat-icon matChipRemove *ngIf="removable">cancel</mat-icon>
+                            </mat-chip>
+                            <input placeholder="Tags" class="form-control" [matChipInputFor]="documentchipList"
+                                [matChipInputSeparatorKeyCodes]="separatorKeysCodes" [matChipInputAddOnBlur]="addOnBlur"
+                                (matChipInputTokenEnd)="add($event)" matInput>
+                        </mat-chip-list>
+                    </mat-form-field>
+                </div>
+                <div class="modal-footer">
+                    <div class="col-sm-12">
+                        <button type="submit" class="btn btn-primary s-12 pull-right"
+                            [disabled]="documentUploader.queue.length == 0 || uploadFormActionDisable"
+                            [ngClass]="documentUploader.queue.length == 0 ? 'btn-disabled' : ''"> {{
+                            uploadFormActionDisable ? 'Loading...' : 'Upload' }} </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="modelEditDocument" tabindex="-1" role="dialog" aria-labelledby="modelEditDocument"
+    data-backdrop="static">
+    <div class="modal-dialog modal-md" role="folderModal">
+        <div class="modal-content b-0">
+            <form fxLayout="column" [formGroup]="uploadForm" #uploadFormDirective="ngForm"
+                (ngSubmit)="onUpdateUploadsubmits()">
+                <div class="modal-header r-0 bg-primary">
+                    <h6 class="modal-title text-white" id="exampleModalLabel">Update Document</h6>
+                    <a href="#" (click)="closeModel()" data-dismiss="modal" aria-label="Close"
+                        class="paper-nav-toggle paper-nav-white active">
+                        <i></i>
+                    </a>
+                </div>
+                <div class="modal-body no-p no-b">
+                    <div class="row mt-2">
+                        <div class="col-sm-12">
+                            <div class="col-sm-12 select p-0">
+                                <input type="file" formControlName="upload" ng2FileSelect
+                                    [uploader]="modelUpdateDocument" (change)="uploadUpdateFiles()" #updatefileInput
+                                    class="chooser" />
+                            </div>
+                            <div class="col-sm-12 doc-drag-drop rm-doc-padding mt-2 mb-2">
+                                <div ng2FileDrop [ngClass]="{'nv-file-over': hasBaseDropZoneOver}"
+                                    (fileOver)="fileOverBase($event)" [uploader]="modelUpdateDocument"
+                                    class="well my-drop-zone">
+                                    <i class="icon-download"></i> Drag and drop to upload or <a
+                                        href="javascript:void(0)" (click)="updatefileInput.click()">browse for files</a>
+                                </div>
+                            </div>
+                            <div class="col-sm-12">
+                                <table class="table" *ngIf="modelUpdateDocument.queue.length > 0">
+                                    <thead>
+                                        <tr>
+                                            <th width="50%">Name</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr *ngFor="let item of modelUpdateDocument.queue">
+                                            <td><strong>{{ item?.file?.name }}</strong></td>
+                                            <td nowrap>
+                                                <button type="button" class="btn btn-danger btn-xs"
+                                                    (click)="item.remove()">
+                                                    <span class="glyphicon glyphicon-trash"></span> Remove
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <mat-form-field class="example-full-width col-sm-12">
+                                <mat-chip-list #editchipList>
+                                    <mat-chip *ngFor="let tag of tags" [removable]="removable" (removed)="remove(tag)">
+                                        {{tag}}
+                                        <mat-icon matChipRemove *ngIf="removable">cancel</mat-icon>
+                                    </mat-chip>
+                                    <input placeholder="Tags" class="form-control" [matChipInputFor]="editchipList"
+                                        [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                                        [matChipInputAddOnBlur]="addOnBlur" (matChipInputTokenEnd)="add($event)"
+                                        matInput>
+                                </mat-chip-list>
+                            </mat-form-field>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button (click)="closeModel()" type="button" class="btn btn-default s-12 pull-right"
+                        data-dismiss="modal"> Close </button>
+                    <button type="submit" class="btn btn-primary s-12"> {{ updateFormActionDisable ? 'Loading...' :
+                        'Upload' }} </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

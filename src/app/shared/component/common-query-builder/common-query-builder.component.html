@@ -1,0 +1,369 @@
+<div class="loading-center-icon" *ngIf="loader">
+    <img src="assets/img/ben-loading-icon-v2.gif" />
+</div>
+<div class="box query-builder">
+    <div class="row">
+        <div [ngClass]="type == 'page' ? 'col-sm-4' : 'col-sm-12'">
+            <form [formGroup]="queryForm" #queryFormDirective="ngForm" novalidate (ngSubmit)="addQuery()">
+                <div class="row">
+                    <mat-form-field class="col-sm-12">
+                        <mat-select placeholder="Select Group" formControlName="group"
+                            (selectionChange)="getQuery('section', $event.value)">
+                            <mat-option *ngFor="let group of groups; let i = index" [value]="group">{{ group }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                    <mat-form-field class="col-sm-12" *ngIf="queryForm.controls.group.value != 'Tasks'">
+                        <mat-select [disabled]="
+                    queryForm.controls.group.value == '' || sections.length == 0
+                    ? true
+                    : false
+                    " placeholder="Select Section" formControlName="section"
+                            (selectionChange)="getQuery('fields', $event.value)">
+                            <mat-option *ngFor="let section of sections; let i = index" [value]="section">{{ section }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                    <mat-form-field class="col-sm-12">
+                        <mat-select [disabled]="
+                    queryForm.controls.section.value == '' || fields.length == 0
+                    ? true
+                    : false
+                    " placeholder="Select Field" formControlName="field"
+                            (selectionChange)="getQuery('operator', $event.value)">
+                            <ng-container *ngFor="let field of fields; let i = index">
+                                <mat-option *ngIf="field != 'Address'" [value]="field">
+                                    {{ field }}
+                                </mat-option>
+                            </ng-container>
+                        </mat-select>
+                    </mat-form-field>
+                    <mat-form-field class="col-sm-12">
+                        <mat-select [disabled]="
+                    queryForm.controls.field.value == '' || operators.length == 0
+                    ? true
+                    : false
+                    " placeholder="Select Operator" formControlName="operator" (selectionChange)="getInput()">
+                            <mat-option *ngFor="let operator of operators; let i = index" [value]="operator">{{ operator
+                                }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                    <div class="col-sm-12 p-0" *ngIf="extra_field">
+                        <mat-form-field class="col-sm-6">
+                            <mat-select placeholder="Select Type" formControlName="period">
+                                <mat-option *ngFor="let option of options; let i = index" [value]="option.value">{{
+                                    option.label }}
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                        <mat-form-field class="col-sm-6">
+                            <input type="number" class="form-control" formControlName="periodValue" placeholder="Value"
+                                matInput />
+                        </mat-form-field>
+                    </div>
+                    <div *ngIf="value_field && text_field && queryForm.controls.operator.value != 'Range'"
+                        class="col-sm-12 p-0">
+                        <div [ngSwitch]="fieldType" class="col-sm-12 p-0">
+                            <mat-form-field *ngSwitchCase="'int'" class="example-full-width col-sm-12">
+                                <input class="form-control" digitOnly formControlName="text" placeholder="Value"
+                                    matInput />
+                            </mat-form-field>
+                            <mat-form-field *ngSwitchCase="'decimal'" class="example-full-width col-sm-12">
+                                <input class="form-control" formControlName="text" placeholder="Value" matInput
+                                    [options]="{ prefix: '', align: 'left' }" currencyMask />
+                            </mat-form-field>
+                            <mat-form-field *ngSwitchCase="'currency'" class="example-full-width col-sm-12">
+                                <input class="form-control" formControlName="text" placeholder="Value" matInput
+                                    [options]="{ prefix: '$ ', align: 'left' }" currencyMask />
+                            </mat-form-field>
+                            <mat-form-field *ngSwitchCase="'date'" class="example-full-width col-sm-12">
+                                <input matInput class="form-control" (dateChange)="selectChanged($event.value)"
+                                    formControlName="textDate" [matDatepicker]="picker" placeholder="Choose a date"
+                                    (click)="picker.open()" />
+                                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                                <mat-datepicker #picker></mat-datepicker>
+                            </mat-form-field>
+                            <mat-form-field *ngSwitchCase="'boolean'" class="example-full-width col-sm-12">
+                                <mat-select placeholder="Select Value" formControlName="text">
+                                    <mat-option [value]="'true'">True</mat-option>
+                                    <mat-option [value]="'false'">False</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                            <mat-form-field *ngSwitchDefault class="example-full-width col-sm-12">
+                                <input class="form-control" formControlName="text" placeholder="Default Value"
+                                    matInput />
+                            </mat-form-field>
+                        </div>
+                    </div>
+                    <div *ngIf="queryForm.controls.operator.value == 'Range'" class="col-sm-12 p-0">
+                        <mat-form-field class="example-full-width col-sm-12">
+                            <input class="text-dark" matInput [satDatepicker]="rangePicker" (click)="rangePicker.open()"
+                                placeholder="Choose date range" (dateChange)="selectChanged($event.value)"
+                                formControlName="textDate" />
+                            <sat-datepicker #rangePicker [rangeMode]="true" [closeAfterSelection]="true">
+                            </sat-datepicker>
+                            <sat-datepicker-toggle matSuffix [for]="rangePicker"></sat-datepicker-toggle>
+                        </mat-form-field>
+                    </div>
+                    <mat-form-field *ngIf="
+                    !value_field && value_array.length > 0 && value_array.length <= 20
+                    " class="col-sm-12">
+                        <mat-select placeholder="Select Value" formControlName="text">
+                            <mat-option [value]="">Select Value</mat-option>
+                            <mat-option *ngFor="let option of value_array; let i = index" [value]="option.value"
+                                (click)="valueChanged(option)">{{ option.key }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                    <mat-form-field class="col-sm-12" *ngIf="!value_field && value_array.length >= 21">
+                        <input matInput placeholder="Select Value" aria-label="Select Value" formControlName="text"
+                            [matAutocomplete]="auto" />
+                        <mat-autocomplete #auto="matAutocomplete">
+                            <mat-option *ngFor="let option of filteredOptions | async" [value]="option?.value"
+                                (click)="valueChanged(option)">
+                                {{ option?.key }}
+                            </mat-option>
+                        </mat-autocomplete>
+                    </mat-form-field>
+                    <mat-list class="col-sm-12 p-0" *ngIf="selectedValue.length > 0">
+                        <mat-list-item *ngFor="let value of selectedValue">
+                            <h4 class="col-sm-1 crossbox focused pull-left">
+                                <a aria-label="Close" class="paper-nav-toggle paper-nav-white active"
+                                    (click)="removeSelectedValue(value)">
+                                    <i></i>
+                                </a>
+                            </h4>
+                            <h5 class="col-sm-11 focused pull-left text-left">
+                                {{ value?.key }}
+                            </h5>
+                        </mat-list-item>
+                    </mat-list>
+                    <mat-form-field *ngIf="queryForm.controls.group.value == 'Tasks'" class="col-sm-12">
+                        <mat-select placeholder="Due Date" formControlName="taskOption">
+                            <mat-option *ngFor="let option of taskOptions; let i = index" [value]="option.value">{{
+                                option.label }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                    <!-- <div *ngIf="queryForm.controls.group.value == 'Tasks'" class="col-sm-12 text-left">
+                    <b>Due Today</b>
+                </div> -->
+                    <div class="col-sm-12">
+                        <button type="submit" [disabled]="
+                        text_field
+                        ? queryForm.controls.text.value == ''
+                        ? true
+                        : false
+                        : false
+                        " class="btn btn-primary s-12 pull-right">
+                            {{ editbtn ? 'Save' : 'Add' }}
+                        </button>
+                        <button *ngIf="editbtn" type="button" (click)="resetQueryFilter()"
+                            class="btn btn-default s-12 pull-right mr-2">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div [ngClass]="type == 'page' ? 'col-sm-8' : 'col-sm-12 mt-2'">
+            <div class="row">
+                <div class="col-sm-12">
+                    <mat-form-field [ngClass]="type == 'page' ? 'col-sm-4' : 'col-sm-6'" class="pull-right p-0">
+                        <mat-select placeholder="Saved Filters" [(ngModel)]="savedQueryId">
+                            <mat-option *ngFor="let query of savedQuery; let i = index" [value]="query.id"
+                                (click)="executeSaveQuery(i)">{{ query.name }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                    <div class="query_box p-2 mb-2">
+                        <mat-chip-list>
+                            <mat-chip [ngClass]="count_loader ? '' : queryText.count > 0 ? 'green' : 'red'"
+                                *ngFor="let queryText of queryArray; let i = index" (click)="getEditQuery(i)"
+                                [removable]="removable">
+                                <span>
+                                    {{ queryText.group }}<span *ngIf="isTaskGroup()">.{{ queryText.section }}</span>.{{
+                                    queryText.field }}
+                                    {{ queryText.operator }}
+                                    <span *ngIf="queryText.selectedValue.length == 0 && queryText.text != ''">
+                                        "
+                                        <span *ngIf="queryText.operator == 'Range'">{{ queryText.text.begin }} -
+                                            {{queryText.text.end}}
+                                        </span>
+                                        <span *ngIf="queryText.operator != 'Range'">
+                                            {{queryText.text}}
+                                        </span>
+                                        "<span *ngIf="queryText.taskOption != ''">
+                                            , {{queryText.taskOption | titlecase}}
+                                        </span>
+                                    </span>
+                                    <span *ngIf="queryText.selectedValue.length > 0">"<span *ngFor="
+                                    let value of queryText.selectedValue;
+                                    let i = index;
+                                    let first = first;
+                                    let last = last
+                                    ">{{ value.key }}<span *ngIf="!last">, </span></span>"</span>
+                                    <span *ngIf="queryText.period != ''">"{{ queryText.periodValue }} {{
+                                        queryText.period }}"</span>
+                                    <span *ngIf="!count_loader">({{ queryText.count }})</span>
+                                    <span class="loader-outer" *ngIf="count_loader">
+                                        <spinner-loader></spinner-loader>
+                                    </span>
+                                </span>
+                                <mat-icon (click)="remove(i)" matChipRemove *ngIf="removable">cancel</mat-icon>
+                            </mat-chip>
+                        </mat-chip-list>
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <button *ngIf="savedQueryId == '' && type == 'page'"
+                        [disabled]="queryArray.length > 0 ? false : true" type="button" data-toggle="modal"
+                        data-target="#saveQueryModal" class="btn btn-primary s-12 pull-right">
+                        Save
+                    </button>
+                    <button *ngIf="savedQueryId != '' && type == 'page'"
+                        [disabled]="queryArray.length > 0 ? false : true" type="button" data-toggle="modal"
+                        data-target="#saveQueryModal" class="btn btn-primary s-12 pull-right">
+                        Update
+                    </button>
+                    <button type="button" (click)="resetQueryBox()" class="btn btn-default s-12 pull-right mr-2">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4" *ngIf="table_fields.length > 0">
+        <div class="col-sm-12 mb-2 pull-right text-right">
+            <a class="btn btn-primary" href="javascript:void(0)" (click)="exportAsXLSX()">
+                Export
+            </a>
+            <a class="btn btn-primary pull-right mb-3 ml-2" href="javascript:void(0)" (click)="openFieldsModal()"
+                *ngIf="type == 'page' && isTaskGroup()">
+                Fields
+            </a>
+        </div>
+        <div class="col-sm-12 table-responsive">
+            <table class="border-table text-left table table-hover mb-3">
+                <thead>
+                    <tr>
+                        <th *ngFor="let field of table_fields">{{ field }}</th>
+                    </tr>
+                </thead>
+                <tbody *ngIf="clients.length > 0">
+                    <tr class="doclist" *ngFor="let client of clients">
+                        <td *ngFor="let field of bind_fields">
+                            <div [ngSwitch]="field">
+                                <span
+                                    *ngSwitchCase="['advisement_date', 'date', 'first_monies', 'dob', 'billing_date', 'advisor_start_date', 'account_opened_date', 'due_date'].includes(field) ? field : ''">
+                                    <span *ngIf="client[field] != '' && client[field] != null">{{ client[field] |
+                                        date:'MM-dd-yyyy' }} </span>
+                                    <span *ngIf="client[field] == '' || client[field] == null">-</span>
+                                </span>
+                                <span *ngSwitchCase="'start'">{{ client[field] | date:'MM-dd-yyyy hh:mm a' }} </span>
+                                <span
+                                    *ngSwitchCase="['balance', 'amount', 'net_worth', 'market_value' ].includes(field) ? field : ''">{{
+                                    client[field] | currency:'USD':'symbol':'0.2'}} </span>
+                                <span *ngSwitchDefault>{{ client[field] }}</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <p *ngIf="clients.length == 0" class="col-sm-12 p-0">No data found</p>
+            <div class="row">
+                <div class="col-sm-6 pull-right">
+                    <strong class="text-left d-block mb-1 fw-900">
+                        Total number: {{ paginationTotal }}
+                    </strong>
+                </div>
+                <div class="col-sm-6 pull-left text-left">
+                    <ngb-pagination *ngIf="clients.length > 0" class="d-flex justify-content-end"
+                        [pageSize]="paginationPerPage" [collectionSize]="paginationTotal" [maxSize]="5" [rotate]="true"
+                        [ellipses]="false" [boundaryLinks]="true" [(page)]="page" aria-label="Default pagination"
+                        (pageChange)="pageChange($event)"></ngb-pagination>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="saveQueryModal" tabindex="-1" role="dialog" aria-labelledby="saveQueryModal"
+    data-backdrop="static">
+    <div class="modal-dialog modal-md" role="notes">
+        <div class="modal-content b-0">
+            <div class="modal-header r-0 bg-primary">
+                <h6 class="modal-title text-white" id="modelEditfundManagerLabel">
+                    Save Filter
+                </h6>
+                <a href="#" data-dismiss="modal" aria-label="Close" class="paper-nav-toggle paper-nav-white active">
+                    <i></i>
+                </a>
+            </div>
+            <div class="modal-body no-p no-b">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="card b-0">
+                            <div class="p-3">
+                                <mat-form-field class="example-full-width col-sm-12">
+                                    <input type="text" class="form-control" [(ngModel)]="queryName"
+                                        placeholder="Filter Name" matInput />
+                                </mat-form-field>
+                                <mat-checkbox class="example-full-width col-sm-12" aria-label="smartSet" id="smartSet"
+                                    labelPosition="after" name="smartSet" [(ngModel)]="smartSet">
+                                    <h5 class="m-0">Save as a smart set</h5>
+                                </mat-checkbox>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default s-12 pull-right" data-dismiss="modal">
+                    Cancel
+                </button>
+                <button type="button" (click)="saveQueryBox()" class="btn btn-primary s-12 pull-right">
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="tableFields" tabindex="-1" role="dialog" aria-labelledby="tableFields"
+    data-backdrop="static">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content b-0">
+            <div class="modal-header r-0 bg-primary">
+                <h6 class="modal-title text-white" id="exampleModalLabel">
+                    Select Fields
+                </h6>
+                <a href="javascript:void(0)" data-dismiss="modal" aria-label="Close"
+                    class="paper-nav-toggle paper-nav-white active"><i></i></a>
+            </div>
+            <div class="modal-body no-p no-b">
+                <div class="card-body" id="fieldsModal" [ngStyle]="{ 'margin-bottom': '20px' }">
+                    <div class="row">
+                        <div class="fieldSections col-md-4" *ngFor="let type of fieldTypes">
+                            <h4>{{ type.type }}</h4>
+                            <div class="form-row">
+                                <div class="col-md-12">
+                                    <div class="row">
+                                        <mat-checkbox *ngFor="let field of type.fields" class="col-sm-12 mb-3"
+                                            [checked]="checkFields(field)" (change)="addFields(field)"><span>{{ field
+                                                }}</span></mat-checkbox>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default s-12" data-dismiss="modal">
+                        Close
+                    </button>
+                    <button type="button" class="btn btn-primary s-12" data-dismiss="modal"
+                        (click)="updateQueryFields()">
+                        Update
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
